@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  database:
+    image: 'bitnami/mongodb:latest'
+    restart: unless-stopped
+    container_name: mongodb
+    networks:
+      - proxy
+    environment:
+      - MONGODB_ADVERTISED_HOSTNAME=127.0.0.1
+      - MONGODB_REPLICA_SET_MODE=primary
+      - MONGODB_ROOT_USER
+      - MONGODB_ROOT_PASSWORD
+      - MONGODB_REPLICA_SET_KEY
+    ports:
+      - '27017:27017'
+    volumes:
+      - '${VOLUMES}/mongodb:/bitnami/mongodb'
+
+networks:
+  proxy:
+    external: true

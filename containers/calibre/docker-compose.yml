@@ -1,0 +1,49 @@
+version: "3.4"
+
+services:
+  calibre:
+    container_name: calibre
+    image: lscr.io/linuxserver/calibre:latest
+    restart: unless-stopped
+    networks:
+      - proxy
+    security_opt:
+      - seccomp:unconfined
+    environment:
+      - PUID
+      - PGID
+      - TZ
+    volumes:
+      - ${VOLUMES}/calibre:/config
+      - ${VOLUMES}/data:/books
+    labels:
+      - "traefik.enable=true"
+      - 'traefik.http.routers.calibre.entryPoints=https'
+      - "traefik.http.services.calibre.loadbalancer.server.port=8080"
+      - "traefik.http.routers.calibre.rule=Host(`calibre.${BASE_DOMAIN}`)"
+      - "traefik.http.routers.calibre.middlewares=authelia@file"
+
+  calibre-web:
+    image: lscr.io/linuxserver/calibre-web:latest
+    container_name: calibre-web
+    environment:
+      - PUID
+      - PGID
+      - TZ
+      - DOCKER_MODS=linuxserver/mods:universal-calibre
+    volumes:
+      - ${VOLUMES}/calibre-web:/config
+      - ${VOLUMES}/data/media/books:/books
+    restart: unless-stopped
+    networks:
+      - proxy
+    labels:
+      - "traefik.enable=true"
+      - 'traefik.http.routers.calibre-web.entryPoints=https'
+      - "traefik.http.services.calibre-web.loadbalancer.server.port=8083"
+      - "traefik.http.routers.calibre-web.rule=Host(`books.${BASE_DOMAIN}`)"
+      - "traefik.http.routers.calibre-web.middlewares=authelia@file"
+
+networks:
+  proxy:
+    external: true

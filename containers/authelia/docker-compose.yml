@@ -1,0 +1,83 @@
+version: '3.9'
+services:
+  authelia:
+    container_name: authelia
+    image: authelia/authelia
+    restart: unless-stopped
+    networks:
+      - proxy
+    expose:
+      - 9091
+    volumes:
+      - ${VOLUMES}/authelia/config:/config
+      - ./configuration.yml:/config/configuration.yml
+      - ${VOLUMES}/authelia/certificates:/certificates
+    environment:
+      - TZ
+    labels:
+      - 'traefik.enable=true'
+      - 'traefik.http.routers.authelia.rule=Host(`a.${BASE_DOMAIN}`)'
+      - 'traefik.http.routers.authelia.entryPoints=https'
+    depends_on:
+      - authelia-postgres
+      - authelia-redis
+      - lldap
+  authelia-postgres:
+    container_name: authelia-postgres
+    image: postgres
+    restart: unless-stopped
+    volumes:
+      - "${VOLUMES}/authelia/database:/var/lib/postgresql/data"
+    environment:
+      - POSTGRES_PASSWORD
+      - POSTGRES_USER
+      - POSTGRES_DB
+    networks:
+      - proxy
+  authelia-backup:
+    image: prodrigestivill/postgres-backup-local
+    restart: unless-stopped
+    volumes:
+      - ${BACKUPS}/authelia:/backups
+    networks:
+      - proxy
+    depends_on:
+      - authelia-postgres
+    environment:
+      - SCHEDULE=@daily
+      - BACKUP_KEEP_DAYS=1
+      - BACKUP_KEEP_WEEKS=4
+      - BACKUP_KEEP_MONTHS=6
+  authelia-redis:
+    container_name: authelia-redis
+    image: redis:alpine
+    restart: unless-stopped
+    networks:
+      - proxy
+  lldap:
+    image: nitnelave/lldap:stable
+    container_name: lldap
+    restart: unless-stopped
+    # ports:
+    # For LDAP
+    # - "3890:3890"
+    volumes:
+      - ${VOLUMES}/lldap:/data
+    environment:
+      - UID
+      - GID
+      - TZ
+      - LLDAP_JWT_SECRET
+      - LLDAP_LDAP_USER_PASS
+      - LLDAP_LDAP_BASE_DN
+    labels:
+      - 'traefik.enable=true'
+      - 'traefik.http.routers.lldap.rule=Host(`ldap.${BASE_DOMAIN}`)'
+      - 'traefik.http.routers.lldap.entryPoints=https'
+      - "traefik.http.services.lldap.loadbalancer.server.port=17170"
+    networks:
+      - proxy
+
+networks:
+  proxy:
+    external: true

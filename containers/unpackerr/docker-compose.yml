@@ -1,0 +1,43 @@
+version: "3.7"
+services:
+  unpackerr:
+    image: golift/unpackerr
+    container_name: unpackerr
+    volumes:
+      - ${VOLUMES}/data:/data
+    restart: unless-stopped
+    user: 1000:1000
+    networks:
+      - proxy
+    environment:
+      - TZ
+      # Sonarr Config
+      - UN_SONARR_0_URL
+      - UN_SONARR_0_API_KEY
+      - UN_SONARR_0_PATHS_0
+      - UN_SONARR_0_PATHS_1
+      - UN_SONARR_0_PROTOCOLS
+      # Sonarr Anime Config
+      - UN_SONARR_1_URL
+      - UN_SONARR_1_API_KEY
+      - UN_SONARR_1_PATHS_0
+      - UN_SONARR_1_PATHS_1
+      - UN_SONARR_1_PROTOCOLS
+      # Radarr Config
+      - UN_RADARR_0_URL
+      - UN_RADARR_0_API_KEY
+      - UN_RADARR_0_PATHS_0
+      - UN_RADARR_0_PATHS_1
+      - UN_RADARR_0_PROTOCOLS
+      # Readarr Config
+      - UN_READARR_0_URL
+      - UN_READARR_0_API_KEY
+      - UN_READARR_0_PATHS_0
+      - UN_READARR_0_PATHS_1
+      - UN_READARR_0_PROTOCOLS
+    security_opt:
+      - no-new-privileges:true
+
+networks:
+  proxy:
+    external: true

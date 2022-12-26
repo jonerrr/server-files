@@ -1,0 +1,31 @@
+version: "3.2"
+
+services:
+  plex:
+    container_name: plex
+    image: cr.hotio.dev/hotio/plex
+    restart: unless-stopped
+    devices:
+      - /dev/dri:/dev/dri
+    networks:
+      - proxy
+    environment:
+      - PUID
+      - PGID
+      - UMASK
+      - TZ
+      - PLEX_CLAIM="claim-gWDUc4kixxCpo7eYRXEW"
+      - PLEX_PASS="yes"
+    volumes:
+      - ${VOLUMES}/plex/config:/config
+      - ${VOLUMES}/plex/transcode:/transcode
+      - ${VOLUMES}/data:/data
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.plex.entrypoints=https"
+      - "traefik.http.services.plex.loadbalancer.server.port=32400"
+      - "traefik.http.routers.plex.rule=Host(`plex.${BASE_DOMAIN}`)"
+
+networks:
+  proxy:
+    external: true

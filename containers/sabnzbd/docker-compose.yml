@@ -1,0 +1,29 @@
+version: "3.2"
+services:
+  sabnzbd:
+    container_name: sabnzbd
+    image: cr.hotio.dev/hotio/sabnzbd:latest
+    restart: unless-stopped
+    networks:
+      - proxy
+    environment:
+      - PUID
+      - PGID
+      - TZ
+    volumes:
+      - ${VOLUMES}/sabnzbd:/config
+      - ${VOLUMES}/data:/data
+      - ${BACKUPS}/sabnzbd:/backups
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.sabnzbd.entrypoints=https"
+      - "traefik.http.services.sabnzbd.loadbalancer.server.port=8080"
+      - "traefik.http.routers.sabnzbd.rule=Host(`sn.${BASE_DOMAIN}`)"
+
+      - "traefik.http.middlewares.sabnzbd-theme.plugin.themepark.app=sabnzbd"
+      - "traefik.http.middlewares.sabnzbd-theme.plugin.themepark.theme=plex"
+      - "traefik.http.routers.sabnzbd.middlewares=sabnzbd-theme, authelia@file"
+
+networks:
+  proxy:
+    external: true

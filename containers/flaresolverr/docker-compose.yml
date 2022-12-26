@@ -1,0 +1,19 @@
+version: "3"
+
+services:
+  flaresolverr:
+    image: ngosang/flaresolverr:3.0.0.beta3
+    container_name: flaresolverr
+    networks:
+      - flaresolverr
+    environment:
+      - LOG_LEVEL=info
+      - CAPTCHA_SOLVER=none
+      - TZ
+    # ports:
+    #   - "127.0.0.1:8191:8191"
+    restart: unless-stopped
+
+networks:
+  flaresolverr:
+    external: true

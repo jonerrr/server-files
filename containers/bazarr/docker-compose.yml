@@ -1,0 +1,31 @@
+version: "3.2"
+
+services:
+  bazarr:
+    container_name: bazarr
+    image: cr.hotio.dev/hotio/bazarr
+    restart: unless-stopped
+    networks:
+      - proxy
+    environment:
+      - PUID
+      - PGID
+      - UMASK
+      - TZ
+    volumes:
+      - ${VOLUMES}/bazarr:/config
+      - ${VOLUMES}/data:/data
+      - ${BACKUPS}/bazarr:/backups
+    labels:
+      - "traefik.enable=true"
+      - 'traefik.http.routers.bazarr.entryPoints=https'
+      - "traefik.http.services.bazarr.loadbalancer.server.port=6767"
+      - "traefik.http.routers.bazarr.rule=Host(`bazarr.${BASE_DOMAIN}`)"
+
+      - "traefik.http.middlewares.bazarr-theme.plugin.themepark.app=bazarr"
+      - "traefik.http.middlewares.bazarr-theme.plugin.themepark.theme=plex"
+      - "traefik.http.routers.bazarr.middlewares=bazarr-theme, authelia@file"
+
+networks:
+  proxy:
+    external: true

@@ -1,0 +1,32 @@
+version: "3.7"
+
+services:
+  prowlarr:
+    container_name: prowlarr
+    image: cr.hotio.dev/hotio/prowlarr:testing
+    restart: unless-stopped
+    networks:
+      - proxy
+      - flaresolverr
+    environment:
+      - PUID
+      - PGID
+      - TZ
+    volumes:
+      - ${VOLUMES}/prowlarr:/config
+      - ${BACKUPS}/prowlarr:/backups
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.prowlarr.entrypoints=https"
+      - "traefik.http.services.prowlarr.loadbalancer.server.port=9696"
+      - "traefik.http.routers.prowlarr.rule=Host(`prowlarr.${BASE_DOMAIN}`)"
+
+      - "traefik.http.middlewares.prowlarr-theme.plugin.themepark.app=prowlarr"
+      - "traefik.http.middlewares.prowlarr-theme.plugin.themepark.theme=plex"
+      - "traefik.http.routers.prowlarr.middlewares=prowlarr-theme, authelia@file"
+
+networks:
+  proxy:
+    external: true
+  flaresolverr:
+    external: true

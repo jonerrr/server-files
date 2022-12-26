@@ -1,0 +1,48 @@
+version: '3.9'
+
+services:
+  vaultwarden:
+    image: vaultwarden/server:latest
+    container_name: vaultwarden
+    restart: unless-stopped
+    environment:
+      - WEBSOCKET_ENABLED=true
+      - SIGNUPS_ALLOWED=false
+      - ADMIN_TOKEN
+      - DOMAIN=https://bw.${BASE_DOMAIN}
+      - YUBICO_CLIENT_ID
+      - YUBICO_SECRET_KEY
+      - SMTP_HOST
+      - SMTP_PORT
+      - SMTP_USERNAME
+      - SMTP_PASSWORD
+      - SMTP_FROM=vaultwarden@noreply.${BASE_DOMAIN}
+      - SMTP_SECURITY=starttls
+    networks:
+      - proxy
+    volumes:
+      - ${VOLUMES}/vaultwarden:/data
+    labels:
+      - "traefik.enable=true"
+
+      ########## HTTP
+
+      - "traefik.http.routers.vaultwarden-ui.entrypoints=https"
+      - "traefik.http.routers.vaultwarden-ui.service=vaultwarden-ui"
+      - "traefik.http.services.vaultwarden-ui.loadbalancer.server.port=80"
+      - "traefik.http.routers.vaultwarden-ui.rule=Host(`bw.${BASE_DOMAIN}`)"
+
+      ########## Websocket
+
+      - "traefik.http.routers.vaultwarden-ws.entrypoints=https"
+      - "traefik.http.routers.vaultwarden-ws.service=vaultwarden-ws"
+      - "traefik.http.services.vaultwarden-ws.loadbalancer.server.port=3012"
+      - "traefik.http.routers.vaultwarden-ws.rule=Host(`bw.${BASE_DOMAIN}`) && Path(`/notifications/hub`)"
+
+      - "traefik.http.middlewares.strip-ws-prefix.stripprefix.prefixes=/notifications/hub"
+      - "traefik.http.middlewares.strip-ws-prefix.stripprefix.forceSlash=false"
+      - "traefik.http.routers.vaultwarden-ws.middlewares=strip-ws-prefix"
+
+networks:
+  proxy:
+    external: true

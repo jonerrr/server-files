@@ -1,0 +1,32 @@
+version: '3'
+
+services:
+  server:
+    restart: unless-stopped
+    container_name: ark_server
+    image: hermsi/ark-server:latest
+    volumes:
+      - ${VOLUMES}/ark-server/app:/app
+      - ${BACKUPS}/ark:/home/steam/ARK-Backups
+    environment:
+      - SESSION_NAME
+      - SERVER_MAP
+      - SERVER_PASSWORD
+      - ADMIN_PASSWORD
+      - MAX_PLAYERS=30
+      - UPDATE_ON_START=true
+      - BACKUP_ON_STOP=false
+      - PRE_UPDATE_BACKUP=true
+      - WARN_ON_STOP=true
+      - EANBLE_CROSSPLAY=true
+      - DISABLE_BATTLEYE=true
+      - GAME_MOD_IDS
+    ports:
+      # Port for connections from ARK game client
+      - "7777:7777/udp"
+      # Raw UDP socket port (always Game client port +1)
+      - "7778:7778/udp"
+      # RCON management port
+      - "27020:27020/tcp"
+      # Steam's server-list port
+      - "27015:27015/udp"

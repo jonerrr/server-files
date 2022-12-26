@@ -1,0 +1,40 @@
+version: "3.4"
+services:
+  tdarr:
+    container_name: tdarr
+    image: ghcr.io/haveagitgat/tdarr:latest
+    restart: unless-stopped
+    networks:
+      - proxy
+    devices:
+      - /dev/dri:/dev/dri
+    ports:
+      - 127.0.0.1:8266:8266 # server port
+      - 127.0.0.1:8267:8267 # Internal node port
+    environment:
+      - TZ=
+      - PUID
+      - PGID
+      - UMASK_SET
+      - serverIP=0.0.0.0
+      - serverPort=8266
+      - webUIPort=8265
+      - internalNode=true
+      - nodeID
+    volumes:
+      - ${VOLUMES}/tdarr/server:/app/server
+      - ${VOLUMES}/tdarr/configs:/app/configs
+      - ${VOLUMES}/tdarr/logs:/app/logs
+      - ${VOLUMES}/data/media:/media
+      - ${VOLUMES}/tdarr/transcode:/tmp
+      - ${BACKUPS}/tdarr:/app/server/Tdarr/Backups
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.tdarr.entrypoints=https"
+      - "traefik.http.services.tdarr.loadbalancer.server.port=8265"
+      - "traefik.http.routers.tdarr.rule=Host(`tdarr.${BASE_DOMAIN}`)" #      - "traefik.http.routers.tdarr.middlewares=basic-auth@file"
+      - "traefik.http.routers.tdarr.middlewares=authelia@file"
+
+networks:
+  proxy:
+    external: true

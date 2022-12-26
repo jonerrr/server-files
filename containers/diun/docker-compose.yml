@@ -1,0 +1,25 @@
+version: "3.5"
+
+services:
+  diun:
+    image: crazymax/diun:latest
+    container_name: diun
+    command: serve
+    volumes:
+      - "${VOLUMES}/diun:/data"
+      - "/var/run/docker.sock:/var/run/docker.sock"
+    environment:
+      - TZ
+      - LOG_LEVEL=info
+      - LOG_JSON=false
+      - DIUN_WATCH_WORKERS=15
+      - DIUN_WATCH_SCHEDULE=0 0 */3 * *
+      - DIUN_PROVIDERS_DOCKER=true
+      - DIUN_NOTIF_MAIL_HOST
+      - DIUN_NOTIF_MAIL_PORT
+      - DIUN_NOTIF_MAIL_USERNAME
+      - DIUN_NOTIF_MAIL_PASSWORD
+      - DIUN_NOTIF_MAIL_FROM=diun@noreply.${BASE_DOMAIN}
+      - DIUN_NOTIF_MAIL_TO
+      - DIUN_PROVIDERS_DOCKER_WATCHBYDEFAULT=true
+    restart: unless-stopped

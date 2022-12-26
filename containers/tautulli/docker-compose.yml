@@ -1,0 +1,22 @@
+version: "3.2"
+services:
+  tautulli:
+    container_name: tautulli
+    image: cr.hotio.dev/hotio/tautulli
+    restart: unless-stopped
+    networks:
+      - proxy
+    volumes:
+      - ${VOLUMES}/tautulli:/config
+      - ${VOLUMES}/plex/config/Logs:/logs
+      - ${BACKUPS}/tautulli:/config/backups
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.tautulli.entrypoints=https"
+      - "traefik.http.services.tautulli.loadbalancer.server.port=8181"
+      - "traefik.http.routers.tautulli.rule=Host(`tautulli.${BASE_DOMAIN}`)"
+      - "traefik.http.routers.tautulli.middlewares=authelia@file"
+
+networks:
+  proxy:
+    external: true

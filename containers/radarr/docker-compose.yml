@@ -1,0 +1,30 @@
+version: "3.2"
+services:
+  radarr:
+    container_name: radarr
+    image: cr.hotio.dev/hotio/radarr:latest
+    restart: unless-stopped
+    networks:
+      - proxy
+    environment:
+      - PUID
+      - PGID
+      - UMASK
+      - TZ
+    volumes:
+      - ${VOLUMES}/radarr:/config
+      - ${VOLUMES}/data:/data
+      - ${BACKUPS}/radarr:/backups
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.radarr.entrypoints=https"
+      - "traefik.http.services.radarr.loadbalancer.server.port=7878"
+      - "traefik.http.routers.radarr.rule=Host(`radarr.${BASE_DOMAIN}`)"
+
+      - "traefik.http.middlewares.radarr-theme.plugin.themepark.app=radarr"
+      - "traefik.http.middlewares.radarr-theme.plugin.themepark.theme=plex"
+      - "traefik.http.routers.radarr.middlewares=radarr-theme, authelia@file"
+
+networks:
+  proxy:
+    external: true

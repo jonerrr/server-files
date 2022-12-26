@@ -1,0 +1,30 @@
+version: "3.2"
+services:
+  readarr:
+    container_name: readarr
+    image: cr.hotio.dev/hotio/readarr:nightly
+    restart: unless-stopped
+    networks:
+      - proxy
+    environment:
+      - PUID
+      - PGID
+      - UMASK
+      - TZ
+    volumes:
+      - ${VOLUMES}/readarr:/config
+      - ${VOLUMES}/data:/data
+      - ${BACKUPS}/readarr:/backups
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.readarr.entrypoints=https"
+      - "traefik.http.services.readarr.loadbalancer.server.port=8787"
+      - "traefik.http.routers.readarr.rule=Host(`readarr.${BASE_DOMAIN}`)"
+
+      - "traefik.http.middlewares.readarr-theme.plugin.themepark.app=readarr"
+      - "traefik.http.middlewares.readarr-theme.plugin.themepark.theme=plex"
+      - "traefik.http.routers.readarr.middlewares=readarr-theme, authelia@file"
+
+networks:
+  proxy:
+    external: true

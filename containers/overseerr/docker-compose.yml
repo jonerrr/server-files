@@ -1,0 +1,23 @@
+version: "3.9"
+services:
+  overseerr:
+    container_name: overseerr
+    image: hotio/overseerr
+    restart: unless-stopped
+    networks:
+      - proxy
+    environment:
+      - PUID
+      - PGID
+      - TZ
+    volumes:
+      - ${VOLUMES}/overseerr:/config
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.overseerr.entrypoints=https"
+      - "traefik.http.services.overseerr.loadbalancer.server.port=5055"
+      - "traefik.http.routers.overseerr.rule=Host(`os.${BASE_DOMAIN}`)"
+
+networks:
+  proxy:
+    external: true

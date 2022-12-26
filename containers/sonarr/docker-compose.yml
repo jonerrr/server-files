@@ -1,0 +1,56 @@
+version: "3.2"
+
+services:
+  sonarr:
+    container_name: sonarr
+    image: cr.hotio.dev/hotio/sonarr:latest
+    restart: unless-stopped
+    networks:
+      - proxy
+    environment:
+      - PUID
+      - PGID
+      - UMASK
+      - TZ
+    volumes:
+      - ${VOLUMES}/sonarr:/config
+      - ${VOLUMES}/data:/data
+      - ${BACKUPS}/sonarr:/backups
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.sonarr.entrypoints=https"
+      - "traefik.http.services.sonarr.loadbalancer.server.port=8989"
+      - "traefik.http.routers.sonarr.rule=Host(`sonarr.${BASE_DOMAIN}`)"
+
+      - "traefik.http.middlewares.sonarr-theme.plugin.themepark.app=sonarr"
+      - "traefik.http.middlewares.sonarr-theme.plugin.themepark.theme=plex"
+      - "traefik.http.routers.sonarr.middlewares=sonarr-theme, authelia@file"
+
+  sonarr-anime:
+    container_name: sonarr-anime
+    image: cr.hotio.dev/hotio/sonarr:latest
+    restart: unless-stopped
+    networks:
+      - proxy
+    environment:
+      - PUID
+      - PGID
+      - UMASK
+      - TZ
+    volumes:
+      - ${VOLUMES}/sonarr-anime:/config
+      - ${VOLUMES}/data:/data
+      - ${BACKUPS}/sonarr-anime:/backups
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.sonarr-anime.entrypoints=https"
+      - "traefik.http.services.sonarr-anime.loadbalancer.server.port=8989"
+      - "traefik.http.routers.sonarr-anime.rule=Host(`s.${BASE_DOMAIN}`)"
+
+      - "traefik.http.middlewares.sonarr-anime-theme.plugin.themepark.app=sonarr"
+      - "traefik.http.middlewares.sonarr-anime-theme.plugin.themepark.theme=hotpink"
+      - "traefik.http.routers.sonarr-anime.middlewares=sonarr-anime-theme, authelia@file"
+
+networks:
+  proxy:
+    external: true

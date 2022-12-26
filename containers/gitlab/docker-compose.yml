@@ -1,0 +1,75 @@
+version: "3"
+
+services:
+  gitlab:
+    image: gitlab/gitlab-ce:latest
+    container_name: gitlab
+    environment:
+      GITLAB_OMNIBUS_CONFIG: |
+        external_url 'https://git.${BASE_DOMAIN}'
+        nginx['listen_https'] = false
+        nginx['listen_port'] = 80
+        # backup
+        gitlab_rails['backup_archive_permissions'] = 0644 # See: https://docs.gitlab.com/ce/raketasks/backup_restore.html#backup-archive-permissions
+        gitlab_rails['backup_keep_time'] = 604800 # 17 days
+        gitlab_rails['backup_path'] = '/backups'
+        gitlab_rails['omniauth_allow_single_sign_on'] = ['github']
+        gitlab_rails['omniauth_providers'] = [
+          {
+            name: "github",
+            app_id: "${GITHUB_APP_ID}",
+            app_secret: "${GITHUB_APP_SECRET}",
+            args: { scope: "user:email repo admin:org project" }
+          },
+          {
+            name: "openid_connect",
+            label: "Authelia",
+            icon: "https://www.authelia.com/images/branding/logo-cropped.png",
+            args: {
+              name: "openid_connect",
+              scope: ["openid","profile","email","groups"],
+              response_type: "code",
+              issuer: "https://a.${BASE_DOMAIN}",
+              discovery: true,
+              client_auth_method: "query",
+              uid_field: "preferred_username",
+              send_scope_to_token_endpoint: "false",
+              client_options: {
+                identifier: "gitlab",
+                secret: "${AUTHELIA_CLIENT_SECRET}",
+                redirect_uri: "https://git.${BASE_DOMAIN}/users/auth/openid_connect/callback"
+              }
+            }
+          }
+        ]
+        gitlab_rails['smtp_enable'] = true
+        gitlab_rails['smtp_address'] = "${SMTP_ADDRESS}"
+        gitlab_rails['smtp_port'] = ${SMTP_PORT}
+        gitlab_rails['smtp_user_name'] = "${SMTP_USERNAME}"
+        gitlab_rails['smtp_password'] = "${SMTP_PASSWORD}"
+        gitlab_rails['smtp_domain'] = "${SMTP_ADDRESS}"
+        gitlab_rails['smtp_authentication'] = "plain"
+        gitlab_rails['smtp_enable_starttls_auto'] = true
+        gitlab_rails['smtp_tls'] = false
+        gitlab_rails['gitlab_email_from'] = 'git@noreply.${BASE_DOMAIN}'
+    restart: unless-stopped
+    networks:
+      - proxy
+    volumes:
+      - '${VOLUMES}/gitlab/config:/etc/gitlab'
+      - '${VOLUMES}/gitlab/logs:/var/log/gitlab'
+      - '${VOLUMES}/gitlab/data:/var/opt/gitlab'
+      - '${BACKUPS}/gitlab:/backups'
+    labels:
+      - "traefik.enable=true"
+      - 'traefik.http.routers.gitlab.entryPoints=https'
+      - "traefik.http.services.gitlab.loadbalancer.server.port=80"
+      - "traefik.http.routers.gitlab.rule=Host(`git.${BASE_DOMAIN}`)"
+
+      - "traefik.tcp.services.gitlab-ssh.loadbalancer.server.port=22"
+      - "traefik.tcp.routers.gitlab-ssh.rule=HostSNI(`*`)"
+      - "traefik.tcp.routers.gitlab-ssh.entrypoints=ssh"
+
+networks:
+  proxy:
+    external: true
